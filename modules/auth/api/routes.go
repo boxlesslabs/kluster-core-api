@@ -12,7 +12,6 @@ package api
 
 import (
 	"github.com/klusters-core/api/config/db"
-	"github.com/klusters-core/api/middlewares"
 	"github.com/labstack/echo"
 )
 
@@ -22,8 +21,8 @@ func IndexAuth(path string, router *echo.Group, con db.StartMongoClient) {
 	// post requests
 	router.POST(path, Auth.Authenticate)
 	router.POST(path+"forgot-password", Auth.ForgotPassword)
-	router.POST(path+"change-password", Auth.ChangePassword, middlewares.IsLoggedIn)
+	//router.POST(path+"change-password", Auth.ChangePassword, middlewares.IsLoggedIn)
 
 	// get requests
-	router.GET(path+"/refresh-token", Auth.RefreshToken, middlewares.IsLoggedIn)
+	//router.GET(path+"/refresh-token", Auth.RefreshToken, middlewares.IsLoggedIn)
 }

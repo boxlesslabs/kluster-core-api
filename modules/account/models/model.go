@@ -21,10 +21,9 @@ var Util utils.GeneralUtil
 
 type (
 	AccountsModel struct {
-		ID              	primitive.ObjectID     	`json:"_id" bson:"_id,omitempty"`
+		ID              	primitive.ObjectID     	`json:"id" bson:"_id,omitempty"`
 		Phone     			string 				   	`json:"phone" bson:"phone,omitempty"`
 		FullName 			string 					`json:"full_name" bson:"full_name,omitempty"`
-		Password			string					`json:"-" bson:"password,omitempty"`
 		Email           	string  				`json:"email" bson:"email,omitempty"`
 		ImageUrl  			string 					`json:"image_url" bson:"image_url,omitempty"`
 		DefaultCluster 		DefaultCluster         	`json:"default_cluster" bson:"default_cluster"`
@@ -53,7 +52,6 @@ func SetAccount(request *AccountRequest) *AccountsModel {
 	return &AccountsModel{
 		Phone:          request.Phone,
 		FullName:       "",
-		Password:       request.Password,
 		Email:          "",
 		ImageUrl:       "",
 		DefaultCluster: DefaultCluster{},
@@ -67,10 +65,6 @@ func SetAccount(request *AccountRequest) *AccountsModel {
 
 func (account *AccountsModel) NewID() {
 	account.DefaultCluster.ClusterId = primitive.NewObjectID()
-}
-
-func (account *AccountsModel) EncryptPassword() {
-	account.Password = Util.HashPassword(account.Password)
 }
 
 func (account *AccountsModel) TimeStamp() {

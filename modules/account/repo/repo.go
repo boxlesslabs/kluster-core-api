@@ -22,6 +22,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"log"
 )
 
 type (
@@ -50,7 +51,6 @@ func (account *accountRepo) CreateAccount(req *model.AccountRequest, auth *model
 
 	newAccount := model.SetAccount(req)
 	newAccount.TimeStamp()
-	newAccount.EncryptPassword()
 	newAccount.NewID()
 	newAccount.MakeOwner()
 
@@ -80,6 +80,7 @@ func (account *accountRepo) DecodeSingle(dbResult *mongo.SingleResult) (*model.A
 	var user *model.AccountsModel
 	decodeErr := dbResult.Decode(&user)
 	if decodeErr != nil {
+		log.Println(decodeErr)
 		return nil, decodeErr
 	}
 	return user, nil
