@@ -11,7 +11,7 @@
 package services
 
 import (
-	err_res "github.com/klusters-core/api/config/error_response"
+	"github.com/klusters-core/api/middlewares"
 	model "github.com/klusters-core/api/modules/account/models"
 	"github.com/klusters-core/api/modules/account/repo"
 	"github.com/klusters-core/api/modules/auth/models"
@@ -67,15 +67,8 @@ func (account *userService) CreateUser(ctx echo.Context) error {
 }
 
 func (account *userService) GetUser(ctx echo.Context) error {
-	 userId, err := validate.ValidateParam(ctx, "userId", result)
-	 if err != nil {
-	 	return ctx.JSON(http.StatusBadRequest, result.ReturnErrorResult(err.Error()))
-	 }
+	userAccount, _ := ctx.(*middlewares.AccountContext)
+	log.Println(*userAccount, "supposed account")
 
-	user, err := account.GetAccount(userId)
-	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, result.ReturnErrorResult(err_res.ErrorGetting{Resource: "user account"}.Error()))
-	}
-
-	return ctx.JSON(http.StatusOK, result.ReturnBasicResult(user))
+	return ctx.JSON(http.StatusOK, result.ReturnBasicResult(userAccount.Account))
 }
