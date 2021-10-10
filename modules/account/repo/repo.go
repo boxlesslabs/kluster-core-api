@@ -32,7 +32,7 @@ type (
 	}
 
 	AccountRepo interface {
-		CreateAccount(req *model.AccountRequest, auth *models.AuthRequest) (*model.AccountsModel, error)
+		CreateAccount(req *model.AccountRequest, auth *models.AuthModel) (*model.AccountsModel, error)
 		GetAccount(id primitive.ObjectID) (*model.AccountsModel, error)
 		GetByPhone(phone string) (*model.AccountsModel, error)
 	}
@@ -43,24 +43,19 @@ func NewAccountRepo(client db.StartMongoClient) *accountRepo {
 	return &accountRepo{col: col, client:client}
 }
 
-func (account *accountRepo) CreateAccount(req *model.AccountRequest, auth *models.AuthRequest) (*model.AccountsModel, error) {
+func (account *accountRepo) CreateAccount(req *model.AccountRequest, auth *models.AuthModel) (*model.AccountsModel, error) {
 	_, err := account.GetByPhone(req.Phone)
 	if err == nil {
 		return nil, errors.New(error_response.DuplicateError{Resource: "user account"}.Error())
 	}
 
-	newAccount := model.SetAccount(req)
-	newAccount.TimeStamp()
-	newAccount.NewID()
-	newAccount.MakeOwner()
-
-	newAuth := models.SetAuth(auth)
-	newAuth.TimeStamp()
-	newAuth.EncryptPassword()
-	newAuth.NewID()
-
 	Auth := repo.NewAuthRepo(account.ReturnClient())
 	_, err = Auth.Create(auth)
+
+
+	newAccount := model.SetAccount(req)
+	newAccount.NewID()
+	newAccount.MakeOwner()
 	result, err := account.col.AddSingle(newAccount)
 	if err != nil {
 		return nil, errors.New(error_response.NotCreated{Resource: "user account"}.Error())

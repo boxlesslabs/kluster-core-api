@@ -30,6 +30,7 @@ type (
 
 	MongoInterface interface {
 		AddSingle(data interface{}) (*unMarshallObjectId, error)
+		AddSingleReturnID(data interface{}) (primitive.ObjectID, error)
 		GetSingleById(id primitive.ObjectID) *mongo.SingleResult
 		GetSingleByQuery(query interface{}) *mongo.SingleResult
 		Count(query interface{}) (int64, error)
@@ -65,6 +66,18 @@ func (db *mongoCollection) AddSingle(data interface{}) (*unMarshallObjectId, err
 	getObjectId.DocID =  res.InsertedID.(primitive.ObjectID)
 
 	return &getObjectId, nil
+}
+
+func (db *mongoCollection) AddSingleReturnID(data interface{}) (primitive.ObjectID, error) {
+	res, err := db.Collection.InsertOne(ctx, data)
+	if err != nil {
+		return primitive.ObjectID{}, err
+	}
+
+	var getObjectId unMarshallObjectId
+	getObjectId.DocID =  res.InsertedID.(primitive.ObjectID)
+
+	return getObjectId.DocID, nil
 }
 
 // get single document from collection

@@ -52,7 +52,7 @@ func (account *userService) CreateUser(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, result.ReturnValidateError(err))
 	}
 
-	auth := models.AuthRequest{
+	auth := models.AuthModel{
 		Phone:   request.Phone,
 		Password: request.Password,
 	}
@@ -68,7 +68,5 @@ func (account *userService) CreateUser(ctx echo.Context) error {
 
 func (account *userService) GetUser(ctx echo.Context) error {
 	userAccount, _ := ctx.(*middlewares.AccountContext)
-	log.Println(*userAccount, "supposed account")
-
 	return ctx.JSON(http.StatusOK, result.ReturnBasicResult(userAccount.Account))
 }

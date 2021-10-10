@@ -11,7 +11,7 @@
  * Define package secrets
  **
  * @struct Secrets
- * @init - Loads .env file into application instance
+ * @api - Loads .env file into application instance
  * @GetSecrets() return secrets 
 **/
 
@@ -36,7 +36,7 @@ type Secrets struct {
 	Environment         string
 }
 
-// init ...
+// api ...
 func init() {
 	_, b, _, _ := runtime.Caller(0)
 	BasePath := path.Dir(b)

@@ -7,7 +7,7 @@
  **
  * @struct ValidateUtil
  **
- * @init() intiliaze translators for gp-validator
+ * @api() intiliaze translators for gp-validator
  * @Validate() Returns an error object
 **/
 

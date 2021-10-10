@@ -59,17 +59,12 @@ func SetAccount(request *AccountRequest) *AccountsModel {
 		Status:         "inactive",
 		FcmId:          "",
 		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
 	}
 }
 
 func (account *AccountsModel) NewID() {
+	account.ID = primitive.NewObjectID()
 	account.DefaultCluster.ClusterId = primitive.NewObjectID()
-}
-
-func (account *AccountsModel) TimeStamp() {
-	account.CreatedAt = time.Now()
-	account.UpdatedAt = time.Now()
 }
 
 func (account *AccountsModel) MakeOwner() {
