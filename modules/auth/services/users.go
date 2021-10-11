@@ -41,22 +41,24 @@ func NewAuthService(repo repo.AuthRepo) *authService {
 
 // PUBLIC
 func (auth *authService) Authenticate(ctx echo.Context) (err error) {
-	err = json.NewDecoder(ctx.Request().Body).Decode(auth.Request)
-	if err := auth.Request.ValidateAuth(); err != nil {
+	request := &models.AuthModel{}
+	err = json.NewDecoder(ctx.Request().Body).Decode(request)
+	if err := request.ValidateAuth(); err != nil {
 		return ctx.JSON(http.StatusBadRequest, auth.ReturnValidateError(err))
 	}
 
-	if auth.Request, err = auth.IAuthRepo.GetByCredentials(auth.Request); err != nil {
+	if request, err = auth.IAuthRepo.GetByCredentials(request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, auth.ReturnErrorResult(err_res.InvalidLoginCredentials{}.Error()))
 	}
 
 	accRepo := accountRepo.NewAccountRepo(auth.IAuthRepo.ReturnClient())
-	account, err := accRepo.GetByPhone(auth.Request.Phone)
+	account, err := accRepo.GetByPhone(request.Phone)
 	if err != nil {
 		log.Println(err)
+		return ctx.JSON(http.StatusBadRequest, auth.ReturnErrorResult(err_res.NotFound{Resource:"account"}.Error()))
 	}
 
-	return auth.ReturnUser(auth.Request.ID, ctx, account)
+	return auth.SignToken(ctx, account, request.ID)
 }
 
 func (auth *authService) RefreshToken(ctx echo.Context) (err error) {
@@ -72,7 +74,7 @@ func (auth *authService) RefreshToken(ctx echo.Context) (err error) {
 		log.Println(err)
 	}
 
-	return auth.ReturnUser(auth.Request.ID, ctx, account)
+	return auth.SignToken(ctx, account, claims.AccountClaims.AuthID)
 }
 
 func (auth *authService) ForgotPassword(ctx echo.Context) error {
@@ -94,12 +96,7 @@ func (auth *authService) ForgotPassword(ctx echo.Context) error {
 		log.Println(err)
 	}
 
-	token, err := auth.SignToken(account, auth.Request.ID)
-	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, err_res.ErrorProcessing{}.Error())
-	}
-
-	return ctx.JSON(http.StatusOK, auth.ReturnSuccessResult("Email successfully sent to your recovery email.", token))
+	return auth.SignToken(ctx, account, auth.Request.ID)
 }
 
 func (auth *authService) ChangePassword(ctx echo.Context) error {
@@ -130,16 +127,7 @@ func (auth *authService) ChangePassword(ctx echo.Context) error {
 
 
 // PRIVATE
-
-func (auth *authService) ReturnUser(authID primitive.ObjectID, ctx echo.Context, userAccount *model.AccountsModel) error {
-	token, err := auth.SignToken(userAccount, authID)
-	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, auth.ReturnErrorResult(err.Error()))
-	}
-	return ctx.JSON(http.StatusOK, auth.ReturnAuthResult(userAccount, token))
-}
-
-func (auth *authService) SignToken (account *model.AccountsModel, authID primitive.ObjectID) (string, error) {
+func (auth *authService) SignToken (ctx echo.Context, account *model.AccountsModel, authID primitive.ObjectID) error {
 	claims := &models.JwtCustomClaims{
 		authID,
 		account.ID,
@@ -151,7 +139,7 @@ func (auth *authService) SignToken (account *model.AccountsModel, authID primiti
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	_token, tokenErr := token.SignedString([]byte(secrets.GetSecrets().JWTSecrets))
 	if tokenErr != nil {
-		return "", tokenErr
+		return ctx.JSON(http.StatusBadRequest, auth.ReturnErrorResult(tokenErr.Error()))
 	}
-	return _token, nil
+	return ctx.JSON(http.StatusOK, auth.ReturnAuthResult(account, _token))
 }

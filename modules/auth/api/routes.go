@@ -21,8 +21,8 @@ func IndexAuth(path string, router *echo.Group, con db.StartMongoClient) {
 
 	// post requests
 	router.POST(path, Auth.Authenticate)
-	router.POST(path+"forgot-password", Auth.ForgotPassword)
-	router.POST(path+"change-password", Auth.ChangePassword, middlewares.IsValidUser(con))
+	router.POST(path+"/forgot-password", Auth.ForgotPassword)
+	router.POST(path+"/change-password", Auth.ChangePassword, middlewares.IsValidUser(con))
 
 	// get requests
 	router.GET(path+"/refresh-token", Auth.RefreshToken, middlewares.IsValidUser(con))

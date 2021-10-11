@@ -24,11 +24,11 @@ import (
 
 type (
 	AuthModel struct {
-		ID              	primitive.ObjectID     	`json:"_id" bson:"_id"`
+		ID              	primitive.ObjectID     	`json:"_id,omitempty" bson:"_id"`
 		Phone     			string 				   	`json:"phone" bson:"phone"`
-		Password			string					`json:"-" bson:"password"`
-		CreatedAt        	time.Time              	`json:"created_at" bson:"created_at"`
-		UpdatedAt        	time.Time              	`json:"updated_at" bson:"updated_at,omitempty"`
+		Password			string					`json:"password" bson:"password"`
+		CreatedAt        	time.Time              	`json:"created_at,omitempty" bson:"created_at"`
+		UpdatedAt        	time.Time              	`json:"updated_at,omitempty" bson:"updated_at,omitempty"`
 	}
 
 	JwtCustomClaims struct {
@@ -66,8 +66,8 @@ func (auth *AuthModel) CreatedStamp() {
 }
 
 func (auth *AuthModel) ValidateAuth() error {
-	return validation.ValidateStruct(&auth,
-		validation.Field(&auth.Phone, validation.Required, validation.Match(regexp.MustCompile(`^[234]\d{10}$`))),
+	return validation.ValidateStruct(auth,
+		validation.Field(&auth.Phone, validation.Required, validation.Match(regexp.MustCompile(`^(234)\d{10}$`))),
 		validation.Field(&auth.Password, validation.Required),
 		)
 }
@@ -81,6 +81,6 @@ func (auth *ChangePasswordRequest) ValidateChangePassword() error {
 
 func (auth *AuthModel) ValidateForgotPassword() error {
 	return validation.ValidateStruct(&auth,
-		validation.Field(&auth.Phone, validation.Required, validation.Match(regexp.MustCompile(`^[234]\d{10}$`))),
+		validation.Field(&auth.Phone, validation.Required, validation.Match(regexp.MustCompile(`^(234)\d{10}$`))),
 	)
 }
