@@ -32,32 +32,38 @@ type (
 	}
 
 	AccountRepo interface {
-		CreateAccount(req *model.AccountRequest, auth *models.AuthModel) (*model.AccountsModel, error)
+		CreateAccount(auth *models.AuthModel) (*model.AccountsModel, error)
 		GetAccount(id primitive.ObjectID) (*model.AccountsModel, error)
 		GetByPhone(phone string) (*model.AccountsModel, error)
 	}
 )
 
+
+// CONSTRUCTOR
 func NewAccountRepo(client db.StartMongoClient) *accountRepo {
 	col := db.NewMongoCollection("account", client)
 	return &accountRepo{col: col, client:client}
 }
 
-func (account *accountRepo) CreateAccount(req *model.AccountRequest, auth *models.AuthModel) (*model.AccountsModel, error) {
-	_, err := account.GetByPhone(req.Phone)
+
+// PUBLIC
+func (account *accountRepo) CreateAccount(auth *models.AuthModel) (*model.AccountsModel, error) {
+	_, err := account.GetByPhone(auth.Phone)
 	if err == nil {
+		log.Println(err)
 		return nil, errors.New(error_response.DuplicateError{Resource: "user account"}.Error())
 	}
 
 	Auth := repo.NewAuthRepo(account.ReturnClient())
 	_, err = Auth.Create(auth)
+	log.Println(err)
 
-
-	newAccount := model.SetAccount(req)
+	newAccount := model.SetAccount(auth)
 	newAccount.NewID()
 	newAccount.MakeOwner()
 	result, err := account.col.AddSingle(newAccount)
 	if err != nil {
+		log.Println(err)
 		return nil, errors.New(error_response.NotCreated{Resource: "user account"}.Error())
 	}
 	return account.GetAccount(result.DocID)
@@ -71,6 +77,8 @@ func (account *accountRepo) GetByPhone(phone string) (*model.AccountsModel, erro
 	return account.DecodeSingle(account.col.GetSingleByQuery(bson.M{"phone": phone}))
 }
 
+
+// PRIVATE
 func (account *accountRepo) DecodeSingle(dbResult *mongo.SingleResult) (*model.AccountsModel, error) {
 	var user *model.AccountsModel
 	decodeErr := dbResult.Decode(&user)

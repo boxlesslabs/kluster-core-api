@@ -5,10 +5,8 @@
 /**
  **
  * @struct AuthModel - defines models for db collection
- * @struct AuthAccount
  * @struct JwtCustomClaims - extend struct with custom fields for signing tokens
- * @struct AuthRequest
- * @struct ForgotPasswordRequest
+ * @struct ChangePasswordRequest
  **
 **/
 
@@ -44,6 +42,7 @@ type (
 	}
 )
 
+// auth constructor
 func SetAuth(request *AuthModel) *AuthModel {
 	return &AuthModel{
 		ID:primitive.NewObjectID(),
@@ -53,6 +52,7 @@ func SetAuth(request *AuthModel) *AuthModel {
 	}
 }
 
+// auth model struct
 func (auth *AuthModel) NewID() {
 	auth.ID = primitive.NewObjectID()
 }
@@ -72,15 +72,17 @@ func (auth *AuthModel) ValidateAuth() error {
 		)
 }
 
+func (auth *AuthModel) ValidateForgotPassword() error {
+	return validation.ValidateStruct(&auth,
+		validation.Field(&auth.Phone, validation.Required, validation.Match(regexp.MustCompile(`^(234)\d{10}$`))),
+	)
+}
+
+
+// change password struct
 func (auth *ChangePasswordRequest) ValidateChangePassword() error {
 	return validation.ValidateStruct(&auth,
 		validation.Field(&auth.OldPassword, validation.Required),
 		validation.Field(&auth.NewPassword, validation.Required),
-	)
-}
-
-func (auth *AuthModel) ValidateForgotPassword() error {
-	return validation.ValidateStruct(&auth,
-		validation.Field(&auth.Phone, validation.Required, validation.Match(regexp.MustCompile(`^(234)\d{10}$`))),
 	)
 }

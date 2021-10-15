@@ -11,28 +11,21 @@
 package services
 
 import (
+	"encoding/json"
 	"github.com/klusters-core/api/middlewares"
 	model "github.com/klusters-core/api/modules/account/models"
 	"github.com/klusters-core/api/modules/account/repo"
 	"github.com/klusters-core/api/modules/auth/models"
 	"github.com/klusters-core/api/utils"
 	"github.com/labstack/echo"
-	"log"
 	"net/http"
 )
 
-var (
-	result utils.Result
-	validate utils.ValidateUtil
-)
-
-func NewUserService(service repo.AccountRepo) *userService {
-	return &userService{service}
-}
-
 type (
 	userService struct {
-		repo.AccountRepo
+		IAccountRepo repo.AccountRepo
+		Model        *model.AccountsModel
+		*utils.Result
 	}
 
 	UserInterface interface {
@@ -41,32 +34,28 @@ type (
 	}
 )
 
-func (account *userService) CreateUser(ctx echo.Context) error {
-	var request = new(model.AccountRequest)
-	if err := ctx.Bind(request); err != nil {
-		return ctx.JSON(http.StatusBadRequest, result.ReturnErrorResult(err.Error()))
+
+func NewAccountService(service repo.AccountRepo) *userService {
+	return &userService{IAccountRepo:service}
+}
+
+func (account *userService) CreateUser(ctx echo.Context) (err error) {
+	var request *models.AuthModel
+	err = json.NewDecoder(ctx.Request().Body).Decode(&request)
+	if err := request.ValidateAuth(); err != nil {
+		return ctx.JSON(http.StatusBadRequest, account.ReturnValidateError(err))
 	}
 
-	// validate request
-	if err := validate.Validate(request); err != nil {
-		return ctx.JSON(http.StatusBadRequest, result.ReturnValidateError(err))
+	if account.Model, err = account.IAccountRepo.CreateAccount(request); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, account.ReturnErrorResult(err.Error()))
 	}
 
-	auth := models.AuthModel{
-		Phone:   request.Phone,
-		Password: request.Password,
-	}
+	// todo: send email or sms confirmation after successful registration
 
-	res, err := account.CreateAccount(request, &auth)
-	if err != nil {
-		log.Println(err)
-		return ctx.JSON(http.StatusInternalServerError, result.ReturnErrorResult(err.Error()))
-	}
-
-	return ctx.JSON(http.StatusOK, result.ReturnBasicResult(res))
+	return ctx.JSON(http.StatusCreated, account.ReturnBasicResult(account.Model))
 }
 
 func (account *userService) GetUser(ctx echo.Context) error {
-	userAccount, _ := ctx.(*middlewares.AccountContext)
-	return ctx.JSON(http.StatusOK, result.ReturnBasicResult(userAccount.Account))
+	userAccount, _ := ctx.(*middlewares.CustomContext)
+	return ctx.JSON(http.StatusOK, account.ReturnBasicResult(userAccount.Account))
 }

@@ -97,7 +97,7 @@ func TestAuthenticate(t *testing.T) {
 
 	// assertions
 	if assert.NoError(t, authService.Authenticate(httpCtx)) {
-		assert.Equal(t, http.StatusCreated, rec.Code)
+		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.NotEmpty(t, rec.Body.String())
 		log.Println(rec.Body.String())
 	}

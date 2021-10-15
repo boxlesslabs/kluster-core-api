@@ -18,7 +18,7 @@ var (
 	result utils.Result
 )
 
-type AccountContext struct {
+type CustomContext struct {
 	AccountClaims *models.JwtCustomClaims
 	Account *model.AccountsModel
 	echo.Context
@@ -45,11 +45,12 @@ func IsValidUser(con db.StartMongoClient) echo.MiddlewareFunc {
 				return echo.NewHTTPError(http.StatusUnauthorized, result.ReturnErrorResult("account does not exist, kindly recheck your credentials"))
 			}
 
-			newContext := &AccountContext{
+			newContext := &CustomContext{
 				AccountClaims: accountClaims,
 				Account:account,
 				Context: ctx,
 			}
+
 			return next(newContext)
 		}
 	}

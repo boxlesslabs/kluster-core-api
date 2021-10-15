@@ -12,12 +12,10 @@
 package model
 
 import (
-	"github.com/klusters-core/api/utils"
+	"github.com/klusters-core/api/modules/auth/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
 )
-
-var Util utils.GeneralUtil
 
 type (
 	AccountsModel struct {
@@ -41,14 +39,9 @@ type (
 		Role        		string           		`json:"role" bson:"role"`
 		Permissions 		[]string           		`json:"permissions" bson:"permissions"`
 	}
-
-	AccountRequest struct {
-		Phone     			string 				   	`json:"phone" validate:"required"`
-		Password			string					`json:"password" validate:"required,gt=5,lt=10"`
-	}
 )
 
-func SetAccount(request *AccountRequest) *AccountsModel {
+func SetAccount(request *models.AuthModel) *AccountsModel {
 	return &AccountsModel{
 		Phone:          request.Phone,
 		FullName:       "",
