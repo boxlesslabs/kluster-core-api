@@ -22,6 +22,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"log"
 )
 
 type (
@@ -31,38 +32,40 @@ type (
 	}
 
 	AccountRepo interface {
-		CreateAccount(req *model.AccountRequest, auth *models.AuthRequest) (*model.AccountsModel, error)
+		CreateAccount(auth *models.AuthModel) (*model.AccountsModel, error)
 		GetAccount(id primitive.ObjectID) (*model.AccountsModel, error)
 		GetByPhone(phone string) (*model.AccountsModel, error)
+		UpdateAccountByModel(accountRequest *model.AccountsModel) (*model.AccountsModel, error)
+		ReturnClient() db.StartMongoClient
 	}
 )
 
+
+// CONSTRUCTOR
 func NewAccountRepo(client db.StartMongoClient) *accountRepo {
 	col := db.NewMongoCollection("account", client)
 	return &accountRepo{col: col, client:client}
 }
 
-func (account *accountRepo) CreateAccount(req *model.AccountRequest, auth *models.AuthRequest) (*model.AccountsModel, error) {
-	_, err := account.GetByPhone(req.Phone)
+
+// PUBLIC
+func (account *accountRepo) CreateAccount(auth *models.AuthModel) (*model.AccountsModel, error) {
+	_, err := account.GetByPhone(auth.Phone)
 	if err == nil {
+		log.Println(err)
 		return nil, errors.New(error_response.DuplicateError{Resource: "user account"}.Error())
 	}
 
-	newAccount := model.SetAccount(req)
-	newAccount.TimeStamp()
-	newAccount.EncryptPassword()
-	newAccount.NewID()
-	newAccount.MakeOwner()
-
-	newAuth := models.SetAuth(auth)
-	newAuth.TimeStamp()
-	newAuth.EncryptPassword()
-	newAuth.NewID()
-
 	Auth := repo.NewAuthRepo(account.ReturnClient())
 	_, err = Auth.Create(auth)
+	log.Println(err)
+
+	newAccount := model.SetAccount(auth)
+	newAccount.NewID()
+	newAccount.MakeOwner()
 	result, err := account.col.AddSingle(newAccount)
 	if err != nil {
+		log.Println(err)
 		return nil, errors.New(error_response.NotCreated{Resource: "user account"}.Error())
 	}
 	return account.GetAccount(result.DocID)
@@ -76,15 +79,27 @@ func (account *accountRepo) GetByPhone(phone string) (*model.AccountsModel, erro
 	return account.DecodeSingle(account.col.GetSingleByQuery(bson.M{"phone": phone}))
 }
 
-func (account *accountRepo) DecodeSingle(dbResult *mongo.SingleResult) (*model.AccountsModel, error) {
-	var user *model.AccountsModel
-	decodeErr := dbResult.Decode(&user)
-	if decodeErr != nil {
-		return nil, decodeErr
+func (account *accountRepo) UpdateAccountByModel(accountRequest *model.AccountsModel) (*model.AccountsModel, error) {
+	result, err := account.col.UpdateById(accountRequest.ID, accountRequest)
+	if err != nil {
+		return nil, error_response.ErrorUpdating{Resource:"account"}
 	}
-	return user, nil
+
+	return account.DecodeSingle(result)
 }
 
 func (account *accountRepo) ReturnClient() db.StartMongoClient {
 	return account.client
+}
+
+
+// PRIVATE
+func (account *accountRepo) DecodeSingle(dbResult *mongo.SingleResult) (*model.AccountsModel, error) {
+	var user *model.AccountsModel
+	decodeErr := dbResult.Decode(&user)
+	if decodeErr != nil {
+		log.Println(decodeErr)
+		return nil, decodeErr
+	}
+	return user, nil
 }

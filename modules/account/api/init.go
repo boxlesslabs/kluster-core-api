@@ -18,5 +18,5 @@ import (
 
 func RegisterAccountService(con db.StartMongoClient) services.UserInterface {
 	accountRepo := repo.NewAccountRepo(con)
-	return services.NewUserService(accountRepo)
+	return services.NewAccountService(accountRepo)
 }

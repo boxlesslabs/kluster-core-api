@@ -17,6 +17,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"log"
 )
 
 type (
@@ -30,6 +31,7 @@ type (
 
 	MongoInterface interface {
 		AddSingle(data interface{}) (*unMarshallObjectId, error)
+		AddSingleReturnID(data interface{}) (primitive.ObjectID, error)
 		GetSingleById(id primitive.ObjectID) *mongo.SingleResult
 		GetSingleByQuery(query interface{}) *mongo.SingleResult
 		Count(query interface{}) (int64, error)
@@ -65,6 +67,18 @@ func (db *mongoCollection) AddSingle(data interface{}) (*unMarshallObjectId, err
 	getObjectId.DocID =  res.InsertedID.(primitive.ObjectID)
 
 	return &getObjectId, nil
+}
+
+func (db *mongoCollection) AddSingleReturnID(data interface{}) (primitive.ObjectID, error) {
+	res, err := db.Collection.InsertOne(ctx, data)
+	if err != nil {
+		return primitive.ObjectID{}, err
+	}
+
+	var getObjectId unMarshallObjectId
+	getObjectId.DocID =  res.InsertedID.(primitive.ObjectID)
+
+	return getObjectId.DocID, nil
 }
 
 // get single document from collection
@@ -156,11 +170,12 @@ func (db *mongoCollection) Aggregate(query mongo.Pipeline) (*mongo.Cursor, error
 }
 
 func (db *mongoCollection) UpdateById(id primitive.ObjectID, data interface{}) (*mongo.SingleResult, error) {
+	log.Println(id)
 	updateOption := options.FindOneAndUpdate().SetReturnDocument(options.After)
 	result := db.Collection.FindOneAndUpdate(
 		ctx,
 		bson.M{"_id": id},
-		bson.M{"$push": data},
+		bson.M{"$set": data},
 		updateOption,
 	)
 
@@ -171,7 +186,7 @@ func (db *mongoCollection) UpdateByQuery(query interface{}, data interface{}) (*
 	result, err := db.Collection.UpdateOne(
 		ctx,
 		query,
-		data,
+		bson.M{"$set": data},
 	)
 	if err != nil {
 		return nil, err

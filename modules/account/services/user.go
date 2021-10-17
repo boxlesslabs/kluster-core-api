@@ -11,71 +11,68 @@
 package services
 
 import (
-	err_res "github.com/klusters-core/api/config/error_response"
+	"encoding/json"
+	"github.com/klusters-core/api/middlewares"
 	model "github.com/klusters-core/api/modules/account/models"
 	"github.com/klusters-core/api/modules/account/repo"
 	"github.com/klusters-core/api/modules/auth/models"
 	"github.com/klusters-core/api/utils"
 	"github.com/labstack/echo"
-	"log"
 	"net/http"
 )
 
-var (
-	result utils.Result
-	validate utils.ValidateUtil
-)
-
-func NewUserService(service repo.AccountRepo) *userService {
-	return &userService{service}
-}
-
 type (
 	userService struct {
-		repo.AccountRepo
+		IAccountRepo repo.AccountRepo
+		Model        *model.AccountsModel
+		*utils.Result
 	}
 
 	UserInterface interface {
 		CreateUser(ctx echo.Context) error
 		GetUser(ctx echo.Context) error
+		UpdateProfile(ctx echo.Context) error
 	}
 )
 
-func (account *userService) CreateUser(ctx echo.Context) error {
-	var request = new(model.AccountRequest)
-	if err := ctx.Bind(request); err != nil {
-		return ctx.JSON(http.StatusBadRequest, result.ReturnErrorResult(err.Error()))
+
+func NewAccountService(service repo.AccountRepo) *userService {
+	return &userService{IAccountRepo:service}
+}
+
+func (account *userService) CreateUser(ctx echo.Context) (err error) {
+	var request *models.AuthModel
+	err = json.NewDecoder(ctx.Request().Body).Decode(&request)
+	if err = request.ValidateAuth(); err != nil {
+		return ctx.JSON(http.StatusBadRequest, account.ReturnValidateError(err))
 	}
 
-	// validate request
-	if err := validate.Validate(request); err != nil {
-		return ctx.JSON(http.StatusBadRequest, result.ReturnValidateError(err))
+	if account.Model, err = account.IAccountRepo.CreateAccount(request); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, account.ReturnErrorResult(err.Error()))
 	}
 
-	auth := models.AuthRequest{
-		Phone:   request.Phone,
-		Password: request.Password,
-	}
+	// todo: send email or sms confirmation after successful registration
 
-	res, err := account.CreateAccount(request, &auth)
-	if err != nil {
-		log.Println(err)
-		return ctx.JSON(http.StatusInternalServerError, result.ReturnErrorResult(err.Error()))
-	}
-
-	return ctx.JSON(http.StatusOK, result.ReturnBasicResult(res))
+	return ctx.JSON(http.StatusCreated, account.ReturnBasicResult(account.Model))
 }
 
 func (account *userService) GetUser(ctx echo.Context) error {
-	 userId, err := validate.ValidateParam(ctx, "userId", result)
-	 if err != nil {
-	 	return ctx.JSON(http.StatusBadRequest, result.ReturnErrorResult(err.Error()))
-	 }
+	userAccount, _ := ctx.(*middlewares.CustomContext)
+	return ctx.JSON(http.StatusOK, account.ReturnBasicResult(userAccount.Account))
+}
 
-	user, err := account.GetAccount(userId)
-	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, result.ReturnErrorResult(err_res.ErrorGetting{Resource: "user account"}.Error()))
+func (account *userService) UpdateProfile(ctx echo.Context) (err error) {
+	userAccount, _ := ctx.(*middlewares.CustomContext)
+	var request *model.AccountsModel
+	err = json.NewDecoder(ctx.Request().Body).Decode(&request)
+	if err = request.ValidateProfileReq(); err != nil {
+		return ctx.JSON(http.StatusBadRequest, account.ReturnValidateError(err))
 	}
 
-	return ctx.JSON(http.StatusOK, result.ReturnBasicResult(user))
+	request.ID = userAccount.AccountClaims.UserID
+	if request, err = account.IAccountRepo.UpdateAccountByModel(request); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, account.ReturnErrorResult(err.Error()))
+	}
+
+	return ctx.JSON(http.StatusOK, account.ReturnSuccessResult(request, "account updated successfully"))
 }
