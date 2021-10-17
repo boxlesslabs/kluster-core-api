@@ -111,14 +111,9 @@ func (auth *authService) ChangePassword(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, auth.ReturnValidateError(err))
 	}
 
-	// check if old password is valid against user
-	 if auth.Model, err = auth.IAuthRepo.ComparePasswords(&claims.AccountClaims.AuthID, request.OldPassword, request.NewPassword); err != nil {
-		return ctx.JSON(http.StatusBadRequest, auth.ReturnErrorResult(err.Error()))
-	 }
-
-	if auth.Model, err = auth.IAuthRepo.UpdatePassword(&claims.AccountClaims.AuthID, request.NewPassword); err != nil {
+	if auth.Model, err = auth.IAuthRepo.UpdatePassword(&claims.AccountClaims.AuthID, request.NewPassword, request.OldPassword); err != nil {
 		log.Println(err)
-		return ctx.JSON(http.StatusBadRequest, auth.ReturnErrorResult(err_res.ErrorUpdating{Resource: "user"}.Error()))
+		return ctx.JSON(http.StatusBadRequest, auth.ReturnErrorResult(err.Error()))
 	}
 
 	return ctx.JSON(http.StatusOK, auth.ReturnSuccessResult(auth.Model, "password updated successfully"))

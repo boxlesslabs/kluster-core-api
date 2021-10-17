@@ -23,7 +23,7 @@ var (
 		Password:  "password",
 	}
 
-	requestJSON = `{"phone": "2348131658199", "password": "passwords"}`
+	requestJSON = `{"phone": "2348131658199", "password": "password"}`
 	requestChangePassword = `{"old_password": "password", "new_password": "passwords"}`
 	token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX2lkIjoiNjE2YjI4Y2E0N2IyMGQ5MDJhY2NhOWYxIiwidXNlcl9pZCI6IjYxNmIyOGNhNDdiMjBkOTAyYWNjYTlmMiIsInBob25lIjoiMjM0ODEzMTY1ODE5OSIsImV4cCI6MTYzNDY3MjA2MH0.S0qq27uAs8ISEFONPrx1vwn7itZ2FWTeuOSK5GZiiX0`
 
@@ -70,13 +70,14 @@ func TestComparePassword(t *testing.T) {
 }
 
 func TestUpdatePassword(t *testing.T) {
-	newPassword := Util.HashPassword("passwords")
+	newPassword := Util.HashPassword("password")
+	oldPassword := Util.HashPassword("passwords")
 	authModel, err = authRepo.GetByPhone(&request.Phone)
 	if assert.NoError(t, err) {
 		assert.NotEmpty(t, authModel)
 	}
 
-	authModel, err = authRepo.UpdatePassword(&authModel.ID, newPassword)
+	authModel, err = authRepo.UpdatePassword(&authModel.ID, newPassword, oldPassword)
 	if assert.NotEmpty(t, authModel) {
 		assert.NoError(t, err)
 		log.Println(authModel, "record retrieved successfully")

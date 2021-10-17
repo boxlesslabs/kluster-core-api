@@ -16,9 +16,9 @@ type (
 	authRepo struct {
 		col 	db.MongoInterface
 		client 	db.StartMongoClient
-		authRes models.AuthModel
+		authRes *models.AuthModel
 		errRes error
-		utils.GeneralUtil
+		*utils.GeneralUtil
 	}
 
 	AuthRepo interface {
@@ -26,7 +26,7 @@ type (
 		GetByCredentials(request *models.AuthModel) (*models.AuthModel, error)
 		GetByPhone(phone *string) (*models.AuthModel, error)
 		ReturnClient() db.StartMongoClient
-		UpdatePassword(id *primitive.ObjectID, password string) (*models.AuthModel, error)
+		UpdatePassword(id *primitive.ObjectID, newPassword string, oldPassword string) (*models.AuthModel, error)
 		ComparePasswords(userID *primitive.ObjectID, oldPassword string, newPassword string) (*models.AuthModel, error)
 		GetByID(id *primitive.ObjectID) (*models.AuthModel, error)
 	}
@@ -55,18 +55,23 @@ func (auth *authRepo) Create(request *models.AuthModel) (*models.AuthModel, erro
 	return auth.GetByID(&auth.authRes.ID)
 }
 
-func (auth *authRepo) UpdatePassword(id *primitive.ObjectID, password string) (*models.AuthModel, error) {
-	log.Println(id, password, "request gotten from service")
-	result, err := auth.col.UpdateById(*id, bson.D{{"password", auth.HashPassword(password)}})
+func (auth *authRepo) UpdatePassword(id *primitive.ObjectID, newPassword string, oldPassword string) (*models.AuthModel, error) {
+	_, err := auth.ComparePasswords(id, oldPassword, newPassword)
 	if err != nil {
 		return nil, err
+	}
+
+	result, err := auth.col.UpdateById(*id, bson.D{{"password", auth.HashPassword(newPassword)}})
+	if err != nil {
+		log.Println(err)
+		return nil, error_response.ErrorUpdating{Resource:"user"}
 	}
 
 	return auth.DecodeSingle(result)
 }
 
-func (auth *authRepo) ComparePasswords(userID *primitive.ObjectID, oldPassword string, newPassword string) (*models.AuthModel, error) {
-	response, err := auth.DecodeSingle(auth.col.GetSingleByQuery(bson.M{"_id": userID, "password": auth.HashPassword(oldPassword)}))
+func (auth *authRepo) ComparePasswords(userID *primitive.ObjectID, oldPassword string, newPassword string) (response *models.AuthModel, err error) {
+	response, err = auth.DecodeSingle(auth.col.GetSingleByQuery(bson.M{"_id": userID, "password": auth.HashPassword(oldPassword)}))
 	if err != nil {
 		log.Println(err)
 		return nil, errors.New("your old password is invalid")
@@ -102,5 +107,5 @@ func (auth *authRepo) DecodeSingle(dbResult *mongo.SingleResult) (*models.AuthMo
 	if auth.errRes != nil {
 		return nil, auth.errRes
 	}
-	return &auth.authRes, nil
+	return auth.authRes, nil
 }
