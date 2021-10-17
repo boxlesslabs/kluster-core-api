@@ -27,7 +27,7 @@ type (
 		GetByPhone(phone *string) (*models.AuthModel, error)
 		ReturnClient() db.StartMongoClient
 		UpdatePassword(id *primitive.ObjectID, password string) (*models.AuthModel, error)
-		ComparePasswords(userID *primitive.ObjectID, password string) (*models.AuthModel, error)
+		ComparePasswords(userID *primitive.ObjectID, oldPassword string, newPassword string) (*models.AuthModel, error)
 		GetByID(id *primitive.ObjectID) (*models.AuthModel, error)
 	}
 )
@@ -65,8 +65,18 @@ func (auth *authRepo) UpdatePassword(id *primitive.ObjectID, password string) (*
 	return auth.DecodeSingle(result)
 }
 
-func (auth *authRepo) ComparePasswords(userID *primitive.ObjectID, password string) (*models.AuthModel, error) {
-	return auth.DecodeSingle(auth.col.GetSingleByQuery(bson.M{"_id": userID, "password": auth.HashPassword(password)}))
+func (auth *authRepo) ComparePasswords(userID *primitive.ObjectID, oldPassword string, newPassword string) (*models.AuthModel, error) {
+	response, err := auth.DecodeSingle(auth.col.GetSingleByQuery(bson.M{"_id": userID, "password": auth.HashPassword(oldPassword)}))
+	if err != nil {
+		log.Println(err)
+		return nil, errors.New("your old password is invalid")
+	}
+
+	if response.Password == auth.HashPassword(newPassword) {
+		return nil, errors.New("your old password and new password are the same")
+	}
+
+	return response, nil
 }
 
 func (auth *authRepo) GetByCredentials(request *models.AuthModel) (*models.AuthModel, error) {

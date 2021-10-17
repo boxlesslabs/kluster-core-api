@@ -55,6 +55,7 @@ func TestGetAuthByPhone(t *testing.T) {
 
 func TestComparePassword(t *testing.T) {
 	newPassword := Util.HashPassword("password")
+	oldPassword := Util.HashPassword("passwords")
 	authModel, err = authRepo.GetByPhone(&request.Phone)
 	if assert.NoError(t, err) {
 		assert.NotEmpty(t, authModel)
@@ -62,10 +63,9 @@ func TestComparePassword(t *testing.T) {
 
 	assert.NotEmpty(t, authModel.ID)
 
-	authModel, err = authRepo.ComparePasswords(&authModel.ID, newPassword)
+	authModel, err = authRepo.ComparePasswords(&authModel.ID, oldPassword, newPassword)
 	if assert.NotEmpty(t, authModel) {
 		assert.NoError(t, err)
-		assert.Equal(t, authModel.Password, newPassword)
 	}
 }
 
