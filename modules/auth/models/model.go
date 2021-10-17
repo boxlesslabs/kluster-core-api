@@ -37,8 +37,8 @@ type (
 	}
 
 	ChangePasswordRequest struct {
-		OldPassword			string					`json:"old_password" validate:"required"`
-		NewPassword			string					`json:"new_password" validate:"required,gt=5,lt=18"`
+		OldPassword			string					`json:"old_password"`
+		NewPassword			string					`json:"new_password"`
 	}
 )
 
@@ -73,7 +73,7 @@ func (auth *AuthModel) ValidateAuth() error {
 }
 
 func (auth *AuthModel) ValidateForgotPassword() error {
-	return validation.ValidateStruct(&auth,
+	return validation.ValidateStruct(auth,
 		validation.Field(&auth.Phone, validation.Required, validation.Match(regexp.MustCompile(`^(234)\d{10}$`))),
 	)
 }
@@ -81,7 +81,7 @@ func (auth *AuthModel) ValidateForgotPassword() error {
 
 // change password struct
 func (auth *ChangePasswordRequest) ValidateChangePassword() error {
-	return validation.ValidateStruct(&auth,
+	return validation.ValidateStruct(auth,
 		validation.Field(&auth.OldPassword, validation.Required),
 		validation.Field(&auth.NewPassword, validation.Required),
 	)

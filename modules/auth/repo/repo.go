@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"log"
 )
 
 type (
@@ -55,7 +56,8 @@ func (auth *authRepo) Create(request *models.AuthModel) (*models.AuthModel, erro
 }
 
 func (auth *authRepo) UpdatePassword(id *primitive.ObjectID, password string) (*models.AuthModel, error) {
-	result, err := auth.col.UpdateById(*id, bson.M{"password": password})
+	log.Println(id, password, "request gotten from service")
+	result, err := auth.col.UpdateById(*id, bson.D{{"password", auth.HashPassword(password)}})
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +66,7 @@ func (auth *authRepo) UpdatePassword(id *primitive.ObjectID, password string) (*
 }
 
 func (auth *authRepo) ComparePasswords(userID *primitive.ObjectID, password string) (*models.AuthModel, error) {
-	return auth.DecodeSingle(auth.col.GetSingleByProjection(bson.M{"_id": userID, "password": password}, bson.M{"password": 1}))
+	return auth.DecodeSingle(auth.col.GetSingleByQuery(bson.M{"_id": userID, "password": auth.HashPassword(password)}))
 }
 
 func (auth *authRepo) GetByCredentials(request *models.AuthModel) (*models.AuthModel, error) {

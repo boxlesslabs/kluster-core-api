@@ -17,6 +17,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"log"
 )
 
 type (
@@ -169,11 +170,12 @@ func (db *mongoCollection) Aggregate(query mongo.Pipeline) (*mongo.Cursor, error
 }
 
 func (db *mongoCollection) UpdateById(id primitive.ObjectID, data interface{}) (*mongo.SingleResult, error) {
+	log.Println(id)
 	updateOption := options.FindOneAndUpdate().SetReturnDocument(options.After)
 	result := db.Collection.FindOneAndUpdate(
 		ctx,
 		bson.M{"_id": id},
-		bson.M{"$push": data},
+		bson.M{"$set": data},
 		updateOption,
 	)
 
@@ -184,7 +186,7 @@ func (db *mongoCollection) UpdateByQuery(query interface{}, data interface{}) (*
 	result, err := db.Collection.UpdateOne(
 		ctx,
 		query,
-		data,
+		bson.M{"$set": data},
 	)
 	if err != nil {
 		return nil, err

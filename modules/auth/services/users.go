@@ -23,6 +23,7 @@ type (
 		IAuthRepo repo.AuthRepo
 		*utils.Result
 		*utils.ValidateUtil
+		*utils.GeneralUtil
 		Model *models.AuthModel
 	}
 
@@ -43,7 +44,7 @@ func NewAuthService(repo repo.AuthRepo) *authService {
 func (auth *authService) Authenticate(ctx echo.Context) (err error) {
 	request := &models.AuthModel{}
 	err = json.NewDecoder(ctx.Request().Body).Decode(request)
-	if err := request.ValidateAuth(); err != nil {
+	if err = request.ValidateAuth(); err != nil {
 		return ctx.JSON(http.StatusBadRequest, auth.ReturnValidateError(err))
 	}
 
@@ -62,7 +63,7 @@ func (auth *authService) Authenticate(ctx echo.Context) (err error) {
 }
 
 func (auth *authService) RefreshToken(ctx echo.Context) (err error) {
-	claims := ctx.(*middlewares.AccountContext)
+	claims := ctx.(*middlewares.CustomContext)
 	auth.Model, err = auth.IAuthRepo.GetByPhone(&claims.AccountClaims.Phone)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, auth.ReturnErrorResult(err_res.ErrorGetting{Resource:"user auth"}.Error()))
@@ -77,13 +78,15 @@ func (auth *authService) RefreshToken(ctx echo.Context) (err error) {
 	return auth.SignToken(ctx, account, claims.AccountClaims.AuthID)
 }
 
-func (auth *authService) ForgotPassword(ctx echo.Context) error {
-	err := json.NewDecoder(ctx.Request().Body).Decode(auth.Model)
-	if err := auth.Model.ValidateForgotPassword(); err != nil {
+func (auth *authService) ForgotPassword(ctx echo.Context) (err error) {
+	request := &models.AuthModel{}
+	err = json.NewDecoder(ctx.Request().Body).Decode(request)
+	if err = request.ValidateForgotPassword(); err != nil {
+		log.Println(err)
 		return ctx.JSON(http.StatusBadRequest, auth.ReturnValidateError(err))
 	}
 
-	if auth.Model, err = auth.IAuthRepo.GetByPhone(&auth.Model.Phone); err != nil {
+	if request, err = auth.IAuthRepo.GetByPhone(&request.Phone); err != nil {
 		return ctx.JSON(http.StatusBadRequest, err_res.ErrorGetting{Resource:"user account"}.Error())
 	}
 
@@ -91,34 +94,35 @@ func (auth *authService) ForgotPassword(ctx echo.Context) error {
 	// ...
 
 	accRepo := accountRepo.NewAccountRepo(auth.IAuthRepo.ReturnClient())
-	account, err := accRepo.GetByPhone(auth.Model.Phone)
+	account, err := accRepo.GetByPhone(request.Phone)
 	if err != nil {
 		log.Println(err)
+		return ctx.JSON(http.StatusBadRequest, err_res.ErrorGetting{Resource:"user account"}.Error())
 	}
 
-	return auth.SignToken(ctx, account, auth.Model.ID)
+	return auth.SignToken(ctx, account, request.ID)
 }
 
 func (auth *authService) ChangePassword(ctx echo.Context) error {
-	claims := ctx.(*middlewares.AccountContext)
-	var request = new(models.ChangePasswordRequest)
-	err := json.NewDecoder(ctx.Request().Body).Decode(auth.Model)
+	claims := ctx.(*middlewares.CustomContext)
+	var request = &models.ChangePasswordRequest{}
+	err := json.NewDecoder(ctx.Request().Body).Decode(request)
 	if err := request.ValidateChangePassword(); err != nil {
 		return ctx.JSON(http.StatusBadRequest, auth.ReturnValidateError(err))
 	}
 
 	// check if old password is valid against user
-	 if auth.Model, err = auth.IAuthRepo.ComparePasswords(&claims.AccountClaims.UserID, request.OldPassword); err != nil {
+	 if auth.Model, err = auth.IAuthRepo.ComparePasswords(&claims.AccountClaims.AuthID, request.OldPassword); err != nil {
 		return ctx.JSON(http.StatusBadRequest, auth.ReturnErrorResult("Oops! Your old password is invalid"))
 	 }
 
 	// check if old password is same as new password
-	if auth.Model.Password == request.NewPassword {
+	if auth.Model.Password == auth.HashPassword(request.NewPassword) {
 		return ctx.JSON(http.StatusBadRequest, auth.ReturnErrorResult("Oops! Your old password and new password is the same"))
 	}
 
-	// update user password
-	if auth.Model, err = auth.IAuthRepo.UpdatePassword(&claims.AccountClaims.UserID, request.NewPassword); err != nil {
+	if auth.Model, err = auth.IAuthRepo.UpdatePassword(&claims.AccountClaims.AuthID, request.NewPassword); err != nil {
+		log.Println(err)
 		return ctx.JSON(http.StatusBadRequest, auth.ReturnErrorResult(err_res.ErrorUpdating{Resource: "user"}.Error()))
 	}
 

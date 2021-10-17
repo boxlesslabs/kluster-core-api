@@ -19,7 +19,7 @@ var (
 	MongoClient = db.Connect()
 	accountRepo = repo.NewAccountRepo(MongoClient)
 	accountService = services.NewAccountService(accountRepo)
-	token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX2lkIjoiNjE2MWRkMDUyY2U3ZTJiNjJiZjljMzk1IiwidXNlcl9pZCI6IjYxNjUzZGE3ODc4YjRhMGM4OTVhMmEwZCIsInBob25lIjoiMjM0ODEzMTY1ODE5NyIsImV4cCI6MTYzNDUzMTk4MX0.EUF3ouiQTVqWPzyLyiuuwjek7LhTYWEt6sbjuME_n3E`
+	token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX2lkIjoiNjE2YjI4Y2E0N2IyMGQ5MDJhY2NhOWYxIiwidXNlcl9pZCI6IjYxNmIyOGNhNDdiMjBkOTAyYWNjYTlmMiIsInBob25lIjoiMjM0ODEzMTY1ODE5OSIsImV4cCI6MTYzNDY3MjA2MH0.S0qq27uAs8ISEFONPrx1vwn7itZ2FWTeuOSK5GZiiX0`
 )
 
 
