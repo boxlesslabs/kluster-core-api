@@ -1,7 +1,8 @@
-package eyowo
+package utils
 
 import (
 	"github.com/go-resty/resty/v2"
+	"log"
 )
 
 type networkService struct {
@@ -28,6 +29,9 @@ func (service *networkService) Get(url string, headers map[string]string) (int,[
 	}
 
 	response, err := request.Get(url)
+	if err != nil {
+		log.Println(err)
+	}
 
 	return response.StatusCode(), response.Body(), err
 }
@@ -46,6 +50,9 @@ func (service *networkService) Post(url string, headers map[string]string, body 
 	}
 
 	response, err := request.Post(url)
+	if err != nil {
+		log.Println(err)
+	}
 
 	return response.StatusCode(),response.Body(),err
 }
@@ -64,6 +71,9 @@ func (service *networkService) Patch(url string, headers map[string]string, body
 	}
 
 	response, err := request.Patch(url)
+	if err != nil {
+		log.Println(err)
+	}
 
 	return response.StatusCode(),response.Body(),err
 }
@@ -78,6 +88,9 @@ func (service *networkService) Delete(url string, headers map[string]string) (in
 	}
 
 	response, err := request.Delete(url)
+	if err != nil {
+		log.Println(err)
+	}
 
 	return response.StatusCode(), response.Body(), err
 }

@@ -4,8 +4,9 @@ import "time"
 
 type (
 	AuthResponse struct {
-		Success bool `json:"success"`
-		Errors   string
+		Error			string			`json:"error,omitempty"`
+		Success			string			`json:"success"`
+		ErrorCode		interface{}		`json:"errorCode,omitempty"`
 		Data    struct {
 			User struct {
 				ID     string `json:"id"`
@@ -17,8 +18,9 @@ type (
 
 
 	RefreshTokenResponse struct {
-		Success bool `json:"success"`
-		Errors   string
+		Error			string			`json:"error,omitempty"`
+		Success			string			`json:"success"`
+		ErrorCode		interface{}		`json:"errorCode,omitempty"`
 		Data    struct {
 			AccessToken string `json:"accessToken"`
 			ExpiresIn   int    `json:"expiresIn"`
@@ -26,8 +28,9 @@ type (
 	}
 
 	CreateBillResponse struct {
-		Success bool `json:"success"`
-		Errors   string
+		Error			string			`json:"error,omitempty"`
+		Success			string			`json:"success"`
+		ErrorCode		interface{}		`json:"errorCode,omitempty"`
 		Data    struct {
 			Split             bool          `json:"split"`
 			TransactionCharge int           `json:"transactionCharge"`
@@ -60,14 +63,18 @@ type (
 	}
 
 	VerifyBillResponse struct {
-		Success           bool   `json:"success"`
+		Error			string			`json:"error,omitempty"`
+		Success			string			`json:"success"`
+		ErrorCode		interface{}		`json:"errorCode,omitempty"`
 		PaymentStatus     string `json:"paymentStatus"`
 		Message           string `json:"message"`
 		PaymentStatusCode string `json:"paymentStatusCode"`
 	}
 
 	OtpResponse struct {
-		Success bool   `json:"success"`
+		Error			string			`json:"error,omitempty"`
+		Success			string			`json:"success"`
+		ErrorCode		interface{}		`json:"errorCode,omitempty"`
 		Message string `json:"message"`
 		Data    struct {
 			RefreshToken string `json:"refreshToken"`
@@ -77,7 +84,9 @@ type (
 	}
 
 	PhoneTransferResponse struct {
-		Success bool `json:"success"`
+		Error			string			`json:"error,omitempty"`
+		Success			string			`json:"success"`
+		ErrorCode		interface{}		`json:"errorCode,omitempty"`
 		Data    struct {
 			Transaction struct {
 				Reference string `json:"reference"`
@@ -85,17 +94,21 @@ type (
 			} `json:"transaction"`
 		} `json:"data"`
 		Message string `json:"message"`
-		Error string	`json:"error,omitempty"`
 	}
 
+
+	// REQUESTS
 	PhoneTransferRequest struct {
 		Mobile			string			`json:"mobile"`
 		Amount			uint64			`json:"amount"`
 	}
 
-	ErrorResponse struct {
-		Error			string			`json:"error"`
-		Success			string			`json:"success"`
-		ErrorCode		interface{}		`json:"errorCode"`
+	CreateBillRequest struct {
+		Amount			uint64			`json:"amount"`
+		Email			string			`json:"email"`
+		CallbackURL		string			`json:"callbackURL"`
+		RedirectURL		string			`json:"redirectURL"`
+		Expiry			bool			`json:"expiry"`
+		Duration		string			`json:"duration"`
 	}
 )
