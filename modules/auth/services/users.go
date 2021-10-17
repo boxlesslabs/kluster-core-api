@@ -90,15 +90,15 @@ func (auth *authService) ForgotPassword(ctx echo.Context) (err error) {
 		return ctx.JSON(http.StatusBadRequest, err_res.ErrorGetting{Resource:"user account"}.Error())
 	}
 
-	// todo: handle email implementation here
-	// ...
-
 	accRepo := accountRepo.NewAccountRepo(auth.IAuthRepo.ReturnClient())
 	account, err := accRepo.GetByPhone(request.Phone)
 	if err != nil {
 		log.Println(err)
 		return ctx.JSON(http.StatusBadRequest, err_res.ErrorGetting{Resource:"user account"}.Error())
 	}
+
+	// todo: handle email implementation here
+	// ...
 
 	return auth.SignToken(ctx, account, request.ID)
 }

@@ -12,6 +12,8 @@
 package model
 
 import (
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/klusters-core/api/modules/auth/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
@@ -24,12 +26,12 @@ type (
 		FullName 			string 					`json:"full_name" bson:"full_name,omitempty"`
 		Email           	string  				`json:"email" bson:"email,omitempty"`
 		ImageUrl  			string 					`json:"image_url" bson:"image_url,omitempty"`
-		DefaultCluster 		DefaultCluster         	`json:"default_cluster" bson:"default_cluster"`
-		Clusters       		[]string               	`json:"clusters" bson:"clusters,omitempty"`
-		Status           	string                 	`json:"status" bson:"status,omitempty"`
-		FcmId            	string                 	`json:"fcm_id" bson:"fcm_id,omitempty"`
-		CreatedAt        	time.Time              	`json:"created_at" bson:"created_at,omitempty"`
-		UpdatedAt        	time.Time              	`json:"updated_at" bson:"updated_at,omitempty"`
+		DefaultCluster 		DefaultCluster         	`json:"default_cluster,omitempty" bson:"default_cluster,omitempty"`
+		Clusters       		[]string               	`json:"clusters,omitempty" bson:"clusters,omitempty"`
+		Status           	string                 	`json:"status,omitempty" bson:"status,omitempty"`
+		FcmId            	string                 	`json:"fcm_id,omitempty" bson:"fcm_id,omitempty"`
+		CreatedAt        	time.Time              	`json:"created_at,omitempty" bson:"created_at,omitempty"`
+		UpdatedAt        	time.Time              	`json:"updated_at,omitempty" bson:"updated_at,omitempty"`
 	}
 
 	DefaultCluster struct {
@@ -62,4 +64,12 @@ func (account *AccountsModel) NewID() {
 
 func (account *AccountsModel) MakeOwner() {
 	account.DefaultCluster.Owner = true
+}
+
+func (account *AccountsModel) ValidateProfileReq() error {
+	return validation.ValidateStruct(account,
+		validation.Field(&account.Email, validation.Required, is.Email),
+		validation.Field(&account.ImageUrl, is.URL.Error("image url is not valid")),
+		validation.Field(&account.FullName, validation.Required),
+	)
 }

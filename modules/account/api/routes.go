@@ -23,4 +23,7 @@ func IndexAccount(path string, router *echo.Group, con db.StartMongoClient) {
 
 	// http get methods
 	router.GET(path, Account.GetUser, middlewares.IsValidUser(con))
+
+	// http put methods
+	router.PUT(path, Account.UpdateProfile, middlewares.IsValidUser(con))
 }

@@ -35,6 +35,8 @@ type (
 		CreateAccount(auth *models.AuthModel) (*model.AccountsModel, error)
 		GetAccount(id primitive.ObjectID) (*model.AccountsModel, error)
 		GetByPhone(phone string) (*model.AccountsModel, error)
+		UpdateAccountByModel(accountRequest *model.AccountsModel) (*model.AccountsModel, error)
+		ReturnClient() db.StartMongoClient
 	}
 )
 
@@ -77,6 +79,19 @@ func (account *accountRepo) GetByPhone(phone string) (*model.AccountsModel, erro
 	return account.DecodeSingle(account.col.GetSingleByQuery(bson.M{"phone": phone}))
 }
 
+func (account *accountRepo) UpdateAccountByModel(accountRequest *model.AccountsModel) (*model.AccountsModel, error) {
+	result, err := account.col.UpdateById(accountRequest.ID, accountRequest)
+	if err != nil {
+		return nil, error_response.ErrorUpdating{Resource:"account"}
+	}
+
+	return account.DecodeSingle(result)
+}
+
+func (account *accountRepo) ReturnClient() db.StartMongoClient {
+	return account.client
+}
+
 
 // PRIVATE
 func (account *accountRepo) DecodeSingle(dbResult *mongo.SingleResult) (*model.AccountsModel, error) {
@@ -87,8 +102,4 @@ func (account *accountRepo) DecodeSingle(dbResult *mongo.SingleResult) (*model.A
 		return nil, decodeErr
 	}
 	return user, nil
-}
-
-func (account *accountRepo) ReturnClient() db.StartMongoClient {
-	return account.client
 }
