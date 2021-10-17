@@ -59,6 +59,10 @@ func (auth *authService) Authenticate(ctx echo.Context) (err error) {
 		return ctx.JSON(http.StatusBadRequest, auth.ReturnErrorResult(err_res.NotFound{Resource:"account"}.Error()))
 	}
 
+	if account.Status == model.StatusDeactivated {
+		return ctx.JSON(http.StatusUnauthorized, auth.ReturnErrorResult("user account has been deactivated, kindly contact support for steps to retrieve your account"))
+	}
+
 	return auth.SignToken(ctx, account, request.ID)
 }
 

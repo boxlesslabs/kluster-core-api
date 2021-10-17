@@ -45,6 +45,11 @@ func IsValidUser(con db.StartMongoClient) echo.MiddlewareFunc {
 				return echo.NewHTTPError(http.StatusUnauthorized, result.ReturnErrorResult("account does not exist, kindly recheck your credentials"))
 			}
 
+			if account.Status == model.StatusDeactivated {
+				log.Println("here")
+				return echo.NewHTTPError(http.StatusUnauthorized, result.ReturnErrorResult("account has been deactivated, kindly contact support to activate your account"))
+			}
+
 			newContext := &CustomContext{
 				AccountClaims: accountClaims,
 				Account:account,

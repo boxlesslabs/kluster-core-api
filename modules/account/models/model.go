@@ -12,20 +12,28 @@
 package model
 
 import (
+	"fmt"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/klusters-core/api/modules/auth/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"strings"
 	"time"
+)
+
+const (
+	StatusInactive string = "inactive"
+	StatusActive string = "activated"
+	StatusDeactivated string = "deactivated"
 )
 
 type (
 	AccountsModel struct {
 		ID              	primitive.ObjectID     	`json:"id" bson:"_id,omitempty"`
 		Phone     			string 				   	`json:"phone" bson:"phone,omitempty"`
-		FullName 			string 					`json:"full_name" bson:"full_name,omitempty"`
-		Email           	string  				`json:"email" bson:"email,omitempty"`
-		ImageUrl  			string 					`json:"image_url" bson:"image_url,omitempty"`
+		FullName 			string 					`json:"full_name,omitempty" bson:"full_name,omitempty"`
+		Email           	string  				`json:"email,omitempty" bson:"email,omitempty"`
+		ImageUrl  			string 					`json:"image_url,omitempty" bson:"image_url,omitempty"`
 		DefaultCluster 		DefaultCluster         	`json:"default_cluster,omitempty" bson:"default_cluster,omitempty"`
 		Clusters       		[]string               	`json:"clusters,omitempty" bson:"clusters,omitempty"`
 		Status           	string                 	`json:"status,omitempty" bson:"status,omitempty"`
@@ -46,13 +54,9 @@ type (
 func SetAccount(request *models.AuthModel) *AccountsModel {
 	return &AccountsModel{
 		Phone:          request.Phone,
-		FullName:       "",
-		Email:          "",
-		ImageUrl:       "",
 		DefaultCluster: DefaultCluster{},
 		Clusters:       nil,
-		Status:         "inactive",
-		FcmId:          "",
+		Status:         StatusInactive,
 		CreatedAt:      time.Now(),
 	}
 }
@@ -66,10 +70,34 @@ func (account *AccountsModel) MakeOwner() {
 	account.DefaultCluster.Owner = true
 }
 
+func (account *AccountsModel) SetDeactivate() {
+	account.Status = StatusDeactivated
+}
+
 func (account *AccountsModel) ValidateProfileReq() error {
 	return validation.ValidateStruct(account,
 		validation.Field(&account.Email, validation.Required, is.Email),
 		validation.Field(&account.ImageUrl, is.URL.Error("image url is not valid")),
 		validation.Field(&account.FullName, validation.Required),
 	)
+}
+
+func (account *AccountsModel) ValidateStatus() error {
+	return validation.ValidateStruct(account,
+		validation.Field(&account.Status, validation.In(StatusDeactivated, StatusActive).Error(fmt.Sprintf("status can only be %s or %s", StatusActive, StatusDeactivated))),
+		)
+}
+
+func (account *AccountsModel) ValidateFCMID() error {
+	return validation.ValidateStruct(account,
+		validation.Field(&account.FcmId, validation.Required),
+		)
+}
+
+func (account *AccountsModel) SetUserID(id *primitive.ObjectID) {
+	account.ID = *id
+}
+
+func (account *AccountsModel) SetEmail(email *string) {
+	account.Email = strings.ToLower(*email)
 }

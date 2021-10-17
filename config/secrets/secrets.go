@@ -34,6 +34,11 @@ type Secrets struct {
 	ApplicationName     string
 	JWTSecrets          string
 	Environment         string
+	EyowoBaseUrl		string
+	EyowoAppKey			string
+	EyowoRefreshToken	string
+	EyowoCheckoutBaseURL string
+	APIBaseURL			string
 }
 
 // api ...
@@ -55,6 +60,11 @@ func GetSecrets() Secrets {
 	secrets.ApplicationName = os.Getenv("APPLICATION_NAME")
 	secrets.JWTSecrets = os.Getenv("JWT_SECRET")
 	secrets.Environment = os.Getenv("ENVIRONMENT")
+	secrets.EyowoBaseUrl = os.Getenv("EYOWO_BASE_URL")
+	secrets.EyowoAppKey = os.Getenv("EYOWO_APP_KEY")
+	secrets.EyowoRefreshToken = os.Getenv("EYOWO_REFRESH_TOKEN")
+	secrets.APIBaseURL = os.Getenv("API_BASE_URL")
+	secrets.EyowoCheckoutBaseURL = os.Getenv("EYOWO_CHECKOUT_BASE_URL")
 
 	return secrets
 }

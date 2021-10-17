@@ -75,7 +75,7 @@ func (account *accountRepo) GetAccount(id primitive.ObjectID) (*model.AccountsMo
 	return account.DecodeSingle(account.col.GetSingleById(id))
 }
 
-func (account *accountRepo) GetByPhone(phone string) (*model.AccountsModel, error) {
+func (account *accountRepo) GetByPhone(phone string) (request *model.AccountsModel, err error) {
 	return account.DecodeSingle(account.col.GetSingleByQuery(bson.M{"phone": phone}))
 }
 

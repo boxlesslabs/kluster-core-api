@@ -23,7 +23,7 @@ var (
 		Password:  "password",
 	}
 
-	requestJSON = `{"phone": "2348131658199", "password": "password"}`
+	requestJSON = `{"phone": "2348131658199", "password": "passwords"}`
 	requestChangePassword = `{"old_password": "password", "new_password": "passwords"}`
 	token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX2lkIjoiNjE2YjI4Y2E0N2IyMGQ5MDJhY2NhOWYxIiwidXNlcl9pZCI6IjYxNmIyOGNhNDdiMjBkOTAyYWNjYTlmMiIsInBob25lIjoiMjM0ODEzMTY1ODE5OSIsImV4cCI6MTYzNDY3MjA2MH0.S0qq27uAs8ISEFONPrx1vwn7itZ2FWTeuOSK5GZiiX0`
 
